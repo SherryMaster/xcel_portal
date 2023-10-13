@@ -1,0 +1,33 @@
+{% extends "HR_App/base.html" %}
+
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+    <h1>Logs</h1>
+    {% if user.is_superuser %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Message</th>
+                <th>Time</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+                {% if not log.user.is_superuser %}
+                    <tr>
+                        <td>{{ log.user }}</td>
+                        <td>{{ log.message }}</td>
+                        <td>{{ log.time }}</td>
+                        <td>{{ log.date }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>You are not authorized to view this page.</p>
+    {% endif %}
+{% endblock %}
