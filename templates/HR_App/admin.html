@@ -1,0 +1,66 @@
+{% extends "HR_App/base.html" %}
+
+{% block title %}Xcel Admin{% endblock %}
+
+{% block content %}
+    <h1>Admin Panel</h1>
+    <table class="table mt-5 mb-5 text-center table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Break Status</th>
+            <tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+                {% if not profile.user.is_superuser %}
+                <tr>
+                    <td>{{ profile.user.username }}</td>
+                    <td>
+                        {% if profile.is_on_break %}
+                            On Break
+                            <button class="btn btn-danger" onclick="onBreak_on_PanelButtonClick()" data-toggle="modal" data-target="#breakModal{{ profile.id }}">End Break</button>
+                        {% else %}
+                            Not on Break
+                            <button class="btn btn-success" onclick="onBreak_on_PanelButtonClick()" data-toggle="modal" data-target="#breakModal{{ profile.id }}">Start Break</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% for profile in profiles %}
+        {% if not profile.user.is_superuser %}
+        <div class="modal fade" id="breakModal{{ profile.id }}" tabindex="-1" role="dialog" aria-labelledby="breakModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="breakModalLabel">Break Setting for {{ profile.user.username }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {% if profile.is_on_break %}
+                            Do you want to end it's break?
+                        {% else %}
+                            Do you want to start it's break?
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="profile_id" value="{{ profile.id }}">
+                            <input type="hidden" name="is_on_break" value="{{ profile.is_on_break }}">
+                            <button type="submit" class="btn btn-primary">Confirm</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endblock %}

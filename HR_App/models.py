@@ -17,6 +17,7 @@ class Profile(models.Model):
     total_break_time = models.CharField(default="0:0:0", max_length=200)
     legit_working_time = models.CharField(default="0:0:0", max_length=200)
     is_on_break = models.BooleanField(default=False)
+    is_logged_in = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username + ' ' + self.profile_year + '-' + self.profile_month

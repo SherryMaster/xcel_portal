@@ -1,0 +1,27 @@
+{% extends "HR_App/base.html" %}
+
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+    <h1>Users</h1>
+    {% if user.is_superuser %}
+    <div class="row">
+        {% for profile in profiles %}
+            {% if not profile.user.is_superuser %}
+                <div class="col-md-4 mt-4">
+                        <div class="card text-center">
+                            <h2 class="card-header">{{ profile.user.username }}</h2>
+                            <p class="card-body">Log Status: {% if profile.is_logged_in %}Logged In{% else %}Logged Out{% endif %}</p>
+                            <p class="card-body">Worktime: {{ profile.legit_working_time }}</p>
+                            <p class="card-body">
+                                Break Status: {% if profile.is_on_break %}On Break{% else %}Not on Break{% endif %}, Total Break this login: {{ profile.total_break_time }}
+                            </p>
+                        </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>You are not authorized to view this page.</p>
+    {% endif %}
+{% endblock %}

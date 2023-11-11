@@ -11,13 +11,22 @@ from .models import Logs, Profile
 import datetime
 
 
+def create_log(user, message):
+    Logs.objects.create(
+        user=user,
+        time=datetime.datetime.now(),
+        message=message
+    )
+
+
 # Create your views here.
 class IndexView(TemplateView):
     template_name = 'HR_App/index.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = Profile.objects.get(user=self.request.user)
+        if self.request.user.is_authenticated:
+            context['profile'] = Profile.objects.get(user=self.request.user)
         return context
 
     def post(self, request):
@@ -30,6 +39,7 @@ class IndexView(TemplateView):
                     datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
                 )
             )
+            create_log(self.request.user, 'Started Break')
         else:
             Profile.objects.filter(user=self.request.user).update(
                 is_on_break=False,
@@ -38,6 +48,7 @@ class IndexView(TemplateView):
                     datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
                 )
             )
+            create_log(self.request.user, 'Ended Break')
             break_duration = self.get_break_duration()
             self.add_break_time(break_duration)
         return redirect('HR_App:index')
@@ -84,16 +95,11 @@ class SignUpView(CreateView):
         This function will create a log for the user who just signed up
         :return:
         """
-        Logs.objects.create(
-            user=self.request.user,
-            message='Signed Up'
-        )
+        create_log(self.request.user, 'Signed Up')
         Profile.objects.create(
             user=self.request.user,
             login_time=None,
-            login_date=None,
             logout_time=None,
-            logout_date=None
         )
 
 
@@ -116,12 +122,10 @@ class LoginView(TemplateView):
         This function will create a log for the user who just logged in
         :return:
         """
-        Logs.objects.create(
-            user=self.request.user,
-            message='Logged In'
-        )
+        create_log(self.request.user, 'Logged In')
         Profile.objects.filter(user=self.request.user).update(
             is_on_break=False,
+            is_logged_in=True,
             total_break_time='0:0:0',
         )
         year = datetime.datetime.now().year
@@ -139,15 +143,9 @@ class LogoutView(LoginRequiredMixin, TemplateView):
     template_name = 'HR_App/logout.html'
 
     def post(self, request):
-        username = request.user.username
-        password = request.POST['password']
-        if check_password(password, request.user.password):
-            self.on_logout()
-            print(self.get_session_duration())
-            logout(request)
-            return redirect('HR_App:login')
-        else:
-            return redirect('HR_App:logout')
+        self.on_logout()
+        logout(request)
+        return redirect('HR_App:login')
 
     def on_logout(self):
         """
@@ -172,12 +170,10 @@ class LogoutView(LoginRequiredMixin, TemplateView):
         second = datetime.datetime.now().second
         Profile.objects.filter(user=self.request.user).update(
             logout_time=datetime.datetime(year, month, day, hour, minute, second),
-            is_on_break=False
+            is_on_break=False,
+            is_logged_in=False,
         )
-        Logs.objects.create(
-            user=self.request.user,
-            message=f'Logged Out, Total Duration: {self.get_session_duration()}'
-        )
+        create_log(self.request.user, f'Logged Out\nTotal Duration: {self.get_session_duration()}')
         self.add_worktime(self.get_session_duration())
 
     def get_session_duration(self):
@@ -245,3 +241,76 @@ class LogsView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Logs.objects.order_by('-date', '-time')
+
+
+class UserStatusView(LoginRequiredMixin, ListView):
+    model = Profile
+    template_name = 'HR_App/user_status.html'
+    context_object_name = 'profiles'
+
+
+class AdminView(LoginRequiredMixin, ListView):
+    model = Profile
+    template_name = 'HR_App/admin.html'
+    context_object_name = 'profiles'
+
+    def post(self, request):
+        profile_id = request.POST.get('profile_id')
+        user_profile = Profile.objects.get(id=profile_id)
+        print(user_profile.is_on_break)
+        if user_profile.is_on_break:
+            break_end(profile_id)
+            create_log(
+                user_profile.user, f'Admin Ended it\'s Break, Total Break Time: {get_break_duration(profile_id)}'
+            )
+        else:
+            break_start(profile_id)
+            create_log(user_profile.user, 'Admin Started it\'s Break')
+        return redirect('HR_App:admin')
+
+
+def break_start(profile_id):
+    user = Profile.objects.get(id=profile_id).user
+    Profile.objects.filter(user=user).update(
+        is_on_break=True,
+        break_start_time=datetime.datetime(
+                    datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day,
+                    datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
+                )
+    )
+    return redirect('HR_App:admin')
+
+
+def break_end(profile_id):
+    user = Profile.objects.get(id=profile_id).user
+    Profile.objects.filter(user=user).update(
+        is_on_break=False,
+        break_end_time=datetime.datetime(
+                    datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day,
+                    datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
+        )
+    )
+    duration = get_break_duration(profile_id)
+    add_break_time(profile_id, duration)
+    return redirect('HR_App:admin')
+
+
+def get_break_duration(profile_id):
+    break_start_time = Profile.objects.get(id=profile_id).break_start_time
+    break_end_time = Profile.objects.get(id=profile_id).break_end_time
+    break_start_time = datetime.datetime.strptime(str(break_start_time), '%Y-%m-%d %H:%M:%S')
+    break_end_time = datetime.datetime.strptime(str(break_end_time), '%Y-%m-%d %H:%M:%S')
+    break_duration = break_end_time - break_start_time
+    return break_duration
+
+def add_break_time(profile_id, time):
+        break_time = Profile.objects.get(id=profile_id).total_break_time
+        break_hours = int(break_time.split(':')[0])
+        break_minutes = int(break_time.split(':')[1])
+        break_seconds = int(break_time.split(':')[2])
+        new_time = datetime.timedelta(hours=break_hours, minutes=break_minutes, seconds=break_seconds)
+        total_time = new_time + time
+        hours, remainder = divmod(total_time.seconds + total_time.days * 24 * 3600, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        total_time = '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
+        Profile.objects.filter(id=profile_id).update(total_break_time=total_time)
