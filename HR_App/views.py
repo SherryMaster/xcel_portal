@@ -48,7 +48,7 @@ class IndexView(TemplateView):
                     datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
                 )
             )
-            create_log(self.request.user, 'Ended Break')
+            create_log(self.request.user, f'Ended Break\nTotal Break Time: {self.get_break_duration()}')
             break_duration = self.get_break_duration()
             self.add_break_time(break_duration)
         return redirect('HR_App:index')
