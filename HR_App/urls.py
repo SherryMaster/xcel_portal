@@ -11,6 +11,8 @@ urlpatterns = [
     path('logs/', views.LogsView.as_view(), name='logs'),
     path('statuspage/', views.UserStatusView.as_view(), name='user_status'),
     path('xceladmin/', views.AdminView.as_view(), name='admin'),
+    path('attendance/', views.AttendanceView.as_view(), name='attendance'),
+    path('attendance/<int:user_id>/', views.AttendanceView.as_view(), name='attendance'),
     # # functions paths
     # path('on_break/', views.break_start, name='func_break_start'),
     # path('end_break/', views.break_end, name='func_break_end'),

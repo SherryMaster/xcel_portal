@@ -7,7 +7,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm, ProfileForm
-from .models import Logs, Profile
+from .models import Logs, Profile, Attendance
 import datetime
 
 
@@ -123,6 +123,7 @@ class LoginView(TemplateView):
         :return:
         """
         create_log(self.request.user, 'Logged In')
+
         Profile.objects.filter(user=self.request.user).update(
             is_on_break=False,
             is_logged_in=True,
@@ -137,7 +138,18 @@ class LoginView(TemplateView):
         Profile.objects.filter(user=self.request.user).update(
             login_time=datetime.datetime(year, month, day, hour, minute, second),
         )
+        att = Attendance.objects.filter(user=self.request.user, year=year, month=month, day=day)
 
+        if att:
+            pass
+        else:
+            Attendance.objects.create(
+                user=self.request.user,
+                year=year,
+                month=month,
+                day=day,
+                in_time=datetime.datetime.now().strftime('%H:%M:%S'),
+            )
 
 class LogoutView(LoginRequiredMixin, TemplateView):
     template_name = 'HR_App/logout.html'
@@ -175,6 +187,14 @@ class LogoutView(LoginRequiredMixin, TemplateView):
         )
         create_log(self.request.user, f'Logged Out\nTotal Duration: {self.get_session_duration()}')
         self.add_worktime(self.get_session_duration())
+
+        att = Attendance.objects.filter(user=self.request.user, year=year, month=month, day=day)
+
+        if att:
+            att.update(out_time=datetime.datetime.now().strftime('%H:%M:%S'))
+        else:
+            pass
+
 
     def get_session_duration(self):
         login_time = Profile.objects.get(user=self.request.user).login_time
@@ -269,14 +289,25 @@ class AdminView(LoginRequiredMixin, ListView):
         return redirect('HR_App:admin')
 
 
+class AttendanceView(LoginRequiredMixin, ListView):
+    model = Attendance
+    template_name = 'HR_App/attendence.html'
+    context_object_name = 'attendance'
+
+    def get_queryset(self):
+        return Attendance.objects.order_by('-year', '-month', '-day')
+
+
+
+
 def break_start(profile_id):
     user = Profile.objects.get(id=profile_id).user
     Profile.objects.filter(user=user).update(
         is_on_break=True,
         break_start_time=datetime.datetime(
-                    datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day,
-                    datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
-                )
+            datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day,
+            datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
+        )
     )
     return redirect('HR_App:admin')
 
@@ -286,8 +317,8 @@ def break_end(profile_id):
     Profile.objects.filter(user=user).update(
         is_on_break=False,
         break_end_time=datetime.datetime(
-                    datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day,
-                    datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
+            datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day,
+            datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second
         )
     )
     duration = get_break_duration(profile_id)
@@ -303,14 +334,15 @@ def get_break_duration(profile_id):
     break_duration = break_end_time - break_start_time
     return break_duration
 
+
 def add_break_time(profile_id, time):
-        break_time = Profile.objects.get(id=profile_id).total_break_time
-        break_hours = int(break_time.split(':')[0])
-        break_minutes = int(break_time.split(':')[1])
-        break_seconds = int(break_time.split(':')[2])
-        new_time = datetime.timedelta(hours=break_hours, minutes=break_minutes, seconds=break_seconds)
-        total_time = new_time + time
-        hours, remainder = divmod(total_time.seconds + total_time.days * 24 * 3600, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        total_time = '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
-        Profile.objects.filter(id=profile_id).update(total_break_time=total_time)
+    break_time = Profile.objects.get(id=profile_id).total_break_time
+    break_hours = int(break_time.split(':')[0])
+    break_minutes = int(break_time.split(':')[1])
+    break_seconds = int(break_time.split(':')[2])
+    new_time = datetime.timedelta(hours=break_hours, minutes=break_minutes, seconds=break_seconds)
+    total_time = new_time + time
+    hours, remainder = divmod(total_time.seconds + total_time.days * 24 * 3600, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    total_time = '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
+    Profile.objects.filter(id=profile_id).update(total_break_time=total_time)

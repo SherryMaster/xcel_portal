@@ -31,3 +31,14 @@ class Logs(models.Model):
 
     def __str__(self):
         return self.user.username + ' ' + self.message + ' in', self.time, self.date
+
+class Attendance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    year = models.CharField(max_length=4)
+    month = models.CharField(max_length=2)
+    day = models.CharField(max_length=2)
+    in_time = models.CharField(null=True, blank=True, max_length=200)
+    out_time = models.CharField(null=True, blank=True, max_length=200)
+
+    def __str__(self):
+        return self.user.username

@@ -1,0 +1,50 @@
+{% extends "HR_App/base.html" %}
+
+{% block content %}
+    <h1>User Attendance</h1>
+    <div class="row">
+            {% for att in attendance %}
+                <div class="card col-lg-3 col-md-4 col-sm-6 mb-4 p-3 m-2">
+                    <div class="card-header">
+                        <strong>
+                        {{ att.user }}
+                        </strong>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            {{ att.year }}/{{ att.month }}/{{ att.day }}
+                        </h5>
+                        <p class="card-text">
+                            Check In: {{ att.in_time }}
+                        </p>
+                        <p class="card-text">
+                            Check Out: {{ att.out_time }}
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="btn btn-primary">View</a>
+                    </div>
+                </div>
+            {% endfor %}
+    </div>
+
+
+{#    <table class="table">#}
+{#        <thead>#}
+{#            <tr>#}
+{#                <th>User</th>#}
+{#                <th>Check In</th>#}
+{#                <th>Check Out</th>#}
+{#            </tr>#}
+{#        </thead>#}
+{#        <tbody>#}
+{#            {% for user in users %}#}
+{#                <tr>#}
+{#                    <td>{{ user }}</td>#}
+{#                    <td>{{ user.check_in }}</td>#}
+{#                    <td>{{ user.check_out }}</td>#}
+{#                </tr>#}
+{#            {% endfor %}#}
+{#        </tbody>#}
+{#    </table>#}
+{% endblock %}
