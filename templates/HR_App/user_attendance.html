@@ -1,0 +1,26 @@
+{% extends "HR_App/base.html" %}
+
+{% block content %}
+    <h1>User Attendance</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Date</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for att in attendances %}
+                <tr>
+                    <td>{{ att.user }}</td>
+                    <td>{{ att.day }} / {{ att.month }} / {{ att.year }}</td>
+                    <td>{{ att.in_time }}</td>
+                    <td>{{ att.out_time }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

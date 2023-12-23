@@ -2,12 +2,12 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm, ProfileForm
-from .models import Logs, Profile, Attendance
+from .models import Logs, Profile, Attendance, User
 import datetime
 
 
@@ -77,7 +77,7 @@ class IndexView(TemplateView):
 
 class SignUpView(CreateView):
     form_class = SignUpForm
-    success_url = reverse_lazy('HR_App:login')
+    success_url = reverse_lazy('HR_App:index')
     template_name = 'HR_App/signup.html'
 
     def get_context_data(self, **kwargs):
@@ -290,14 +290,20 @@ class AdminView(LoginRequiredMixin, ListView):
 
 
 class AttendanceView(LoginRequiredMixin, ListView):
-    model = Attendance
-    template_name = 'HR_App/attendence.html'
-    context_object_name = 'attendance'
-
-    def get_queryset(self):
-        return Attendance.objects.order_by('-year', '-month', '-day')
+    model = User
+    template_name = 'HR_App/attendance.html'
+    context_object_name = 'users'
 
 
+class UserAttendanceView(LoginRequiredMixin, TemplateView):
+    template_name = 'HR_App/user_attendance.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_id = self.kwargs['user_id']
+        user = User.objects.get(id=user_id)
+        context['attendances'] = Attendance.objects.filter(user=user).order_by('-year', '-month', '-day')
+        return context
 
 
 def break_start(profile_id):
