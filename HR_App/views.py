@@ -138,17 +138,13 @@ class LoginView(TemplateView):
         Profile.objects.filter(user=self.request.user).update(
             login_time=datetime.datetime(year, month, day, hour, minute, second),
         )
-        att = Attendance.objects.filter(user=self.request.user, year=year, month=month, day=day)
-
-        if att:
-            pass
-        else:
+        att = Attendance.objects.filter(user=self.request.user, date=datetime.datetime.now().date())
+        if not att:
             Attendance.objects.create(
                 user=self.request.user,
-                year=year,
-                month=month,
-                day=day,
-                in_time=datetime.datetime.now().strftime('%H:%M:%S'),
+                date=datetime.datetime.now().date(),
+                in_time=datetime.datetime(year, month, day, hour, minute, second),
+                out_time=datetime.datetime(year, month, day, hour, minute, second),
             )
 
 class LogoutView(LoginRequiredMixin, TemplateView):
@@ -188,12 +184,11 @@ class LogoutView(LoginRequiredMixin, TemplateView):
         create_log(self.request.user, f'Logged Out\nTotal Duration: {self.get_session_duration()}')
         self.add_worktime(self.get_session_duration())
 
-        att = Attendance.objects.filter(user=self.request.user, year=year, month=month, day=day)
-
+        att = Attendance.objects.filter(user=self.request.user, date=datetime.datetime.now().date())
         if att:
-            att.update(out_time=datetime.datetime.now().strftime('%H:%M:%S'))
-        else:
-            pass
+            att.update(
+                out_time=datetime.datetime(year, month, day, hour, minute, second),
+            )
 
 
     def get_session_duration(self):
@@ -302,7 +297,25 @@ class UserAttendanceView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user_id = self.kwargs['user_id']
         user = User.objects.get(id=user_id)
-        context['attendances'] = Attendance.objects.filter(user=user).order_by('-year', '-month', '-day')
+        attendances = Attendance.objects.filter(user=user).order_by('-date')
+
+        # Apply filtering based on form data
+        year = self.request.GET.get('year')
+        month = self.request.GET.get('month')
+        day = self.request.GET.get('day')
+
+        if year:
+            attendances = attendances.filter(date__year=year)
+        if month:
+            attendances = attendances.filter(date__month=month)
+        if day:
+            attendances = attendances.filter(date__day=day)
+
+        context['attendances'] = attendances
+        context['user_att'] = user
+        context['years'] = Attendance.objects.filter(user=user).values_list('date__year', flat=True).distinct()
+        context['months'] = Attendance.objects.filter(user=user).values_list('date__month', flat=True).distinct()
+        context['days'] = Attendance.objects.filter(user=user).values_list('date__day', flat=True).distinct()
         return context
 
 

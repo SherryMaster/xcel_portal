@@ -34,11 +34,9 @@ class Logs(models.Model):
 
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    year = models.CharField(max_length=4)
-    month = models.CharField(max_length=2)
-    day = models.CharField(max_length=2)
-    in_time = models.CharField(null=True, blank=True, max_length=200)
-    out_time = models.CharField(null=True, blank=True, max_length=200)
+    date = models.DateField(null=True, blank=True)
+    in_time = models.TimeField(null=True, blank=True)
+    out_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return self.user.username

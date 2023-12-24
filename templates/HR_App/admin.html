@@ -15,14 +15,16 @@
             {% for profile in profiles %}
                 {% if not profile.user.is_superuser %}
                 <tr>
-                    <td>{{ profile.user.username }}</td>
+                    <td><h4>{{ profile.user.username }}</h4></td>
                     <td>
-                        {% if profile.is_on_break %}
-                            On Break
-                            <button class="btn btn-danger" onclick="onBreak_on_PanelButtonClick()" data-toggle="modal" data-target="#breakModal{{ profile.id }}">End Break</button>
+                        {% if profile.is_logged_in %}
+                            {% if profile.is_on_break %}
+                                <button class="btn btn-danger" onclick="onBreak_on_PanelButtonClick()" data-toggle="modal" data-target="#breakModal{{ profile.id }}">End Break</button>
+                            {% else %}
+                                <button class="btn btn-success" onclick="onBreak_on_PanelButtonClick()" data-toggle="modal" data-target="#breakModal{{ profile.id }}">Start Break</button>
+                            {% endif %}
                         {% else %}
-                            Not on Break
-                            <button class="btn btn-success" onclick="onBreak_on_PanelButtonClick()" data-toggle="modal" data-target="#breakModal{{ profile.id }}">Start Break</button>
+                            Not Logged In
                         {% endif %}
                     </td>
                 </tr>
