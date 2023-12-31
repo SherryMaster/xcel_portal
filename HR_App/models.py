@@ -1,26 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import datetime
-
+import datetime
 from django.utils import timezone
 
 
 # Create your models here.
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_year = models.CharField(default=datetime.now().year, max_length=4)
-    profile_month = models.CharField(default=datetime.now().month, max_length=2)
-    login_time = models.CharField(null=True, blank=True, max_length=200)
-    logout_time = models.CharField(null=True, blank=True, max_length=200)
-    break_start_time = models.CharField(null=True, blank=True, max_length=200)
-    break_end_time = models.CharField(null=True, blank=True, max_length=200)
-    total_break_time = models.CharField(default="0:0:0", max_length=200)
-    legit_working_time = models.CharField(default="0:0:0", max_length=200)
     is_on_break = models.BooleanField(default=False)
     is_logged_in = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.user.username + ' ' + self.profile_year + '-' + self.profile_month
+        return self.user.username
 
 
 class Logs(models.Model):
@@ -30,13 +21,19 @@ class Logs(models.Model):
     message = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.user.username + ' ' + self.message + ' in', self.time, self.date
+        return self.user.username + ' -> ' + self.message + ' | ' + str(self.time) + ' | ' + str(self.date)
 
-class Attendance(models.Model):
+
+class Performance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField(null=True, blank=True)
-    in_time = models.TimeField(null=True, blank=True)
-    out_time = models.TimeField(null=True, blank=True)
+    date = models.DateField(null=True, blank=True, default=datetime.datetime.now().date())
+    login_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
+    work_time = models.IntegerField(null=True, blank=True, default=0)
+    break_time = models.IntegerField(null=True, blank=True, default=0)
+    start_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
+    end_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
+    break_start_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
+    break_end_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username} | Date: {self.date} - WT: {self.work_time} - BT: {self.break_time}"

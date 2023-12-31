@@ -1,6 +1,11 @@
 {% extends "HR_App/base.html" %}
 
 {% block title %}Login{% endblock %}
+{% load static %}
+
+{% block navbar_login_img %}
+    <img src="{% static 'HR_App/img/navbar/login_selected.png' %}" alt="" width="30" height="24" >
+{% endblock %}
 
 {% block content %}
     <form class="form-group" action="" method="post">

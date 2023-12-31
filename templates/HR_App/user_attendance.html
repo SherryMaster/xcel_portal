@@ -1,4 +1,9 @@
 {% extends "HR_App/base.html" %}
+{% load static %}
+
+{% block navbar_att_img %}
+    <img src="{% static 'HR_App/img/navbar/attendance_selected.png' %}" alt="" width="30" height="24" >
+{% endblock %}
 
 {% block content %}
     <h1>{{ user_att.first_name }} {{ user_att.last_name }} Attendance</h1>
@@ -7,7 +12,6 @@
     <section>
         <h2>Filter by:</h2>
         <form action="{% url 'HR_App:attendance_user' user_att.id %}" method="get">
-            {% csrf_token %}
             <div class="form-group">
                 <label for="year">Year:</label>
                 <select class="form-control" id="year" name="year">
@@ -35,9 +39,9 @@
         </form>
     </section>
 
+    <hr>
 
-
-
+    <h5>Total WorkTime: <small>{{ worktime_hour }} hrs {{ worktime_minute }} min and {{ worktime_second }} sec</small></h5>
     <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
@@ -47,11 +51,11 @@
             </tr>
         </thead>
         <tbody>
-            {% for att in attendances %}
+            {% for per in performance %}
                 <tr>
-                    <td>{{ att.date }}</td>
-                    <td>{{ att.in_time }}</td>
-                    <td>{{ att.out_time }}</td>
+                    <td>{{ per.date }}</td>
+                    <td>{{ per.login_time }}</td>
+                    <td>{{ per.end_time }}</td>
                 </tr>
             {% endfor %}
         </tbody>

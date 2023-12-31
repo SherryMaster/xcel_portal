@@ -4,14 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" href="{% static 'HR_App/img/logo.png' %}">
   <!-- Add Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
 </head>
 <body>
+<!-- Flash messages -->
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+  {{ message }}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endfor %}
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="{% url 'HR_App:index' %}">Xcel Portal</a>
+  <a class="navbar-brand" href="{% url 'HR_App:index' %}" title="Xcel Portal"><img src="{% static 'HR_App/img/logo.png' %}" alt="" width="30" height="24"></a>
+    <div class="container-md">
+    {% if user.is_authenticated %}
+    {% endif %}
+    </div>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -23,23 +38,24 @@
                 <a class="nav-link" href="{% url 'HR_App:admin' %}">Admin</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'HR_App:signup' %}">Create User</a>
+                <a class="nav-link" href="{% url 'HR_App:signup' %}" title="Add User">{% block navbar_adduser_img %}<img src="{% static 'HR_App/img/navbar/add_user.png' %}" alt="" width="30" height="24" >{% endblock %}</a>
               </li>
               <li class="nav-item">
-                  <a class="nav-link" href="{% url 'HR_App:logs' %}">Logs</a>
+                  <a class="nav-link" href="{% url 'HR_App:logs' %}" title="Logs">{% block navbar_logs_img %}<img src="{% static 'HR_App/img/navbar/logs.png' %}" alt="" width="30" height="24" >{% endblock %}</a>
               </li>
               <li class="nav-item">
                   <a class="nav-link" href="{% url 'HR_App:user_status' %}">Status</a>
               </li>
               <li class="nav-item">
-                  <a class="nav-link" href="{% url 'HR_App:attendance' %}">Attendance</a>
+                      <a class="nav-link" href="{% url 'HR_App:attendance' %}" title="Attendance">{% block navbar_att_img %}<img src="{% static 'HR_App/img/navbar/attendance.png' %}" alt="" width="30" height="24" >{% endblock %}</a>
+              </li>
           {% endif %}
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'HR_App:logout' %}">Logout</a>
-      </li>
+          <li class="nav-item">
+                  <a class="nav-link" href="{% url 'HR_App:logout' %}" title="Logout">{% block navbar_logout_img %}<img src="{% static 'HR_App/img/navbar/logout.png' %}" alt="" width="30" height="24" >{% endblock %}</a>
+          </li>
       {% else %}
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'HR_App:login' %}">Login</a>
+        <a class="nav-link" href="{% url 'HR_App:login' %}">{% block navbar_login_img %}<img src="{% static 'HR_App/img/navbar/login.png' %}" alt="" width="30" height="24" >{% endblock %}</a>
       </li>
       {% endif %}
     </ul>
