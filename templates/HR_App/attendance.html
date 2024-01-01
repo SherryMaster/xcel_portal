@@ -9,6 +9,7 @@
     <h1>User Attendance</h1>
     <div class="row">
             {% for user in users %}
+                {% if not user.is_superuser %}
                 <div class="card col-lg-3 col-md-4 col-sm-6 mb-4 p-3 m-2">
                     <div class="card-header">
                         <h2>
@@ -22,6 +23,7 @@
                         <a href="{% url 'HR_App:attendance_user' user.id %}" class="btn btn-primary">View</a>
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
     </div>
 
