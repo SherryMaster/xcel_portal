@@ -193,6 +193,17 @@ class LogsView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Logs.objects.order_by('-date', '-time')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['users'] = User.objects.all()
+
+        if self.request.GET.get('username'):
+            username = self.request.GET.get('username')
+            context['logs'] = Logs.objects.filter(user__username=username).order_by('-date', '-time')
+
+        return context
+
+
 
 class UserStatusView(LoginRequiredMixin, ListView):
     model = Profile
