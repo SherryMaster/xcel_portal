@@ -26,7 +26,7 @@ class Logs(models.Model):
 
 class Performance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField(null=True, blank=True, default=datetime.datetime.now().date())
+    date = models.DateField(auto_now_add=True)
     login_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
     work_time = models.IntegerField(null=True, blank=True, default=0)
     break_time = models.IntegerField(null=True, blank=True, default=0)
