@@ -30,9 +30,10 @@ class Performance(models.Model):
     login_time = models.TimeField(null=True, blank=True)
     work_time = models.IntegerField(null=True, blank=True, default=0)
     break_time = models.IntegerField(null=True, blank=True, default=0)
-    end_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
-    break_start_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
-    break_end_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    break_start_time = models.TimeField(null=True, blank=True)
+    break_end_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} | Date: {self.date} - WT: {self.work_time} - BT: {self.break_time}"
