@@ -161,7 +161,6 @@ class LogoutView(LoginRequiredMixin, TemplateView):
                 user=request.user,
                 date=datetime.datetime.now().date(),
                 login_time=datetime.datetime.now().time(),
-                start_time=datetime.datetime.now().time(),
                 end_time=datetime.datetime.now().time(),
             )
         break_start_time = per.break_start_time if per else None
@@ -177,7 +176,7 @@ class LogoutView(LoginRequiredMixin, TemplateView):
         )
         # Calculate the work_time
         per.end_time = datetime.datetime.now().time()
-        start = (per.start_time.hour * 3600) + (per.start_time.minute * 60) + per.start_time.second
+        start = (per.login_time.hour * 3600) + (per.login_time.minute * 60) + per.login_time.second
         end = (per.end_time.hour * 3600) + (per.end_time.minute * 60) + per.end_time.second
         total = end - start
         per.work_time += total - break_time
