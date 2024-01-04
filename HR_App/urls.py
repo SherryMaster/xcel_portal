@@ -1,5 +1,6 @@
 from django.urls import path
 from HR_App import views
+from HR_App import apis
 
 app_name = 'HR_App'
 
@@ -14,6 +15,7 @@ urlpatterns = [
     path('attendance/', views.AttendanceView.as_view(), name='attendance'),
     path('attendance/user/<int:user_id>/', views.UserAttendanceView.as_view(), name='attendance_user'),
     # # functions paths
+    path('api/user_break_check/', apis.get_break_status, name='api_break_check'),
     # path('on_break/', views.break_start, name='func_break_start'),
     # path('end_break/', views.break_end, name='func_break_end'),
 ]

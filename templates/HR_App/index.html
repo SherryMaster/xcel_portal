@@ -5,6 +5,7 @@
 {% block content %}
     <div class="container">
         <h1>Xcel Portal</h1>
+{#        <p>Time Before Refresh: <span id="time">0:0:0</span></p>#}
     </div>
     {% if user.is_authenticated %}
         <div class="container">
@@ -17,14 +18,14 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="is_on_break" value="no_break">
-                <button class="btn btn-danger" type="submit">End Break</button>
+                <button id="break_button" class="btn btn-danger" type="submit">End Break</button>
             </form>
         {% else %}
             <div class="container">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="is_on_break" value="break">
-                <button class="btn btn-success" type="submit">Start Break</button>
+                <button id="break_button" class="btn btn-success" type="submit">Start Break</button>
             </form>
             </div>
         {% endif %}
@@ -35,4 +36,38 @@
 
         </div>
     {% endif %}
+<script>
+    break_set = (onbreak) => {
+    break_button = document.getElementById("break_button")
+    if ((onbreak && break_button.innerHTML === "Start Break") || (!onbreak && break_button.innerHTML === "End Break")) {
+        location.reload();
+    }
+}
+
+setInterval( () => {
+    $.ajax(
+        {
+            url: "{% url 'HR_App:api_break_check' %}",
+            type: "GET",
+            data: {
+                user_id : "{{ user.id }}",
+            },
+            success: function (data) {
+                try {
+                    break_set(data['is_on_break']);
+                }
+                catch (err) {
+                    console.log(err);
+                }
+
+            },
+            error: function (xhr, status, error) {
+                console.log("Error: " + error);
+            },
+            complete: function () {
+            }
+        }
+    ) // Make an AJAX request
+}, 1000)
+</script>
 {% endblock %}

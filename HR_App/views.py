@@ -32,37 +32,28 @@ class IndexView(TemplateView):
 
     def post(self, request):
         value = request.POST['is_on_break']
+        profile = Profile.objects.filter(user=self.request.user)
+        performance = Performance.objects.filter(user=self.request.user)
+        now = datetime.datetime.now()
         if value == 'break':
-            Profile.objects.filter(user=self.request.user).update(
-                is_on_break=True,
-            )
-            Performance.objects.filter(user=self.request.user).update(
-                break_start_time=datetime.datetime.now().time()
-            )
+            profile.update(is_on_break=True)
+            performance.update(break_start_time=now.time())
             create_log(self.request.user, 'Started Break')
             messages.success(request, 'Break Started')
         else:
-            Profile.objects.filter(user=self.request.user).update(
-                is_on_break=False
-            )
-            Performance.objects.filter(user=self.request.user).update(
-                break_end_time=datetime.datetime.now().time()
-            )
-            start_time = Performance.objects.get(user=self.request.user, date=datetime.datetime.now().date()).break_start_time
-            end_time = Performance.objects.get(user=self.request.user, date=datetime.datetime.now().date()).break_end_time
-            print(start_time, "||", end_time)
-            print(f"Start hour {start_time.hour} | End hour {end_time.hour}")
-            print(f"Start min {start_time.minute} | End min {end_time.minute}")
-            print(f"Start sec {start_time.second} | End sec {end_time.second}")
-            break_time = ((end_time.hour * 3600) + (end_time.minute * 60) + end_time.second) - ((start_time.hour * 3600) + (start_time.minute * 60) + start_time.second)
-
+            profile.update(is_on_break=False)
+            performance.update(break_end_time=now.time())
+            performance_obj = performance.get(date=now.date())
+            start_time = performance_obj.break_start_time
+            end_time = performance_obj.break_end_time
+            break_time = ((end_time.hour * 3600) + (end_time.minute * 60) + end_time.second) - (
+                        (start_time.hour * 3600) + (start_time.minute * 60) + start_time.second)
 
             # Update Performance break time
-            per = Performance.objects.get(user=self.request.user, date=datetime.datetime.now().date())
-            per.break_time = per.break_time + break_time
-            per.save()
+            performance_obj.break_time += break_time
+            performance_obj.save()
             create_log(self.request.user,
-                       f'Ended Break\nTotal Break Time: {per.break_time // 3600}:{(per.break_time % 3600) // 60}:{(per.break_time % 3600) % 60}')
+                       f'Ended Break\nTotal Break Time: {performance_obj.break_time // 3600}:{(performance_obj.break_time % 3600) // 60}:{(performance_obj.break_time % 3600) % 60}')
             messages.success(request, 'Break Ended')
         return redirect('HR_App:index')
 
@@ -129,15 +120,13 @@ class LoginView(TemplateView):
         prof.save()
 
         # Performance
-        try:
-            per = Performance.objects.get(user=self.request.user, date=datetime.datetime.now().date())
-            per.start_time = datetime.datetime.now().time()
-            per.save()
-        except:
-            Performance.objects.create(
-                user=self.request.user,
-                login_time=datetime.datetime.now().time()
-            )
+        per, _ = Performance.objects.get_or_create(
+            user=self.request.user,
+            date=datetime.datetime.now().date(),
+            defaults={'login_time': datetime.datetime.now().time()}
+        )
+        per.start_time = datetime.datetime.now().time()
+        per.save()
 
 
 class LogoutView(LoginRequiredMixin, TemplateView):
@@ -160,28 +149,38 @@ class LogoutView(LoginRequiredMixin, TemplateView):
         prof.is_on_break = False
         prof.is_logged_in = False
         prof.save()
+        try:
+            per = Performance.objects.get(user=request.user, date=datetime.datetime.now().date())
+        except:
+            per = Performance.objects.create(
+                user=request.user,
+                date=datetime.datetime.now().date(),
+                login_time=datetime.datetime.now().time(),
+                start_time=datetime.datetime.now().time(),
+                end_time=datetime.datetime.now().time(),
+            )
+        break_start_time = per.break_start_time if per else None
+        break_end_time = (
+            datetime.datetime.now().time() if was_on_break else
+            per.break_end_time if per else None
+        )
+        break_time = (
+            ((break_end_time.hour * 3600) + (break_end_time.minute * 60) + break_end_time.second) -
+            ((break_start_time.hour * 3600) + (break_start_time.minute * 60) + break_start_time.second)
+            if break_start_time is not None and break_end_time is not None else
+            0
+        )
+        # Calculate the work_time
+        per.end_time = datetime.datetime.now().time()
+        start = (per.start_time.hour * 3600) + (per.start_time.minute * 60) + per.start_time.second
+        end = (per.end_time.hour * 3600) + (per.end_time.minute * 60) + per.end_time.second
+        total = end - start
+        per.work_time += total - break_time
+        per.break_time = 0
+        per.save()
 
-        per = Performance.objects.get(user=self.request.user, date=datetime.datetime.now().date())
-        if per:
-            break_start_time = Performance.objects.get(user=self.request.user,
-                                                       date=datetime.datetime.now().date()).break_start_time
-            if was_on_break:
-                break_end_time = datetime.datetime.now().time()
-            else:
-                break_end_time = Performance.objects.get(user=self.request.user,
-                                                         date=datetime.datetime.now().date()).break_end_time
-            if break_start_time is None or break_end_time is None:
-                break_time = 0
-            else:
-                break_time = ((break_end_time.hour * 3600) + (break_end_time.minute * 60) + break_end_time.second) - ((break_start_time.hour * 3600) + (break_start_time.minute * 60) + break_start_time.second)
-            per.end_time = datetime.datetime.now().time()
-            start = (per.start_time.hour * 3600) + (per.start_time.minute * 60) + per.start_time.second
-            end = (per.end_time.hour * 3600) + (per.end_time.minute * 60) + per.end_time.second
-            total = end - start
-            per.work_time = per.work_time + total - break_time
-            per.break_time = 0
-            per.save()
-        create_log(self.request.user, f'Logged Out\nTotal WorkTime Today: {per.work_time // 3600}H {(per.work_time % 3600) // 60}M {(per.work_time % 3600) % 60}S')
+        create_log(self.request.user,
+                   f'Logged Out\nTotal WorkTime Today: {per.work_time // 3600}H {(per.work_time % 3600) // 60}M {(per.work_time % 3600) % 60}S')
         messages.success(request, 'Logged Out')
 
 
@@ -197,12 +196,11 @@ class LogsView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['users'] = User.objects.all()
 
-        if self.request.GET.get('username'):
-            username = self.request.GET.get('username')
+        username = self.request.GET.get('username')
+        if username:
             context['logs'] = Logs.objects.filter(user__username=username).order_by('-date', '-time')
 
         return context
-
 
 
 class UserStatusView(LoginRequiredMixin, ListView):
@@ -221,25 +219,25 @@ class AdminView(LoginRequiredMixin, ListView):
         user_profile = Profile.objects.get(id=profile_id)
         print(user_profile.is_on_break)
         if user_profile.is_on_break:
-            prof = Profile.objects.get(id=profile_id)
-            prof.is_on_break = False
-            prof.save()
+            user_profile.is_on_break = False
+            user_profile.save()
             break_start_time = Performance.objects.get(user=user_profile.user,
                                                        date=datetime.datetime.now().date()).break_start_time
             break_end_time = datetime.datetime.now().time()
-            break_duration = ((break_end_time.hour * 3600) + (break_end_time.minute * 60) + break_end_time.second) - ((break_start_time.hour * 3600) + (break_start_time.minute * 60) + break_start_time.second)
+            break_duration = ((break_end_time.hour * 3600) + (break_end_time.minute * 60) + break_end_time.second) - (
+                        (break_start_time.hour * 3600) + (break_start_time.minute * 60) + break_start_time.second)
             total_break = break_duration
             per = Performance.objects.get(user=user_profile.user, date=datetime.datetime.now().date())
             per.break_end_time = break_end_time
-            per.break_time = per.break_time + total_break
+            per.break_time += total_break
             per.save()
             create_log(
-                user_profile.user, f'Admin Ended it\'s Break, Total Break Time: {per.break_time // 3600}:{(per.break_time % 3600) // 60}:{(per.break_time % 3600) % 60}'
+                user_profile.user,
+                f'Admin Ended it\'s Break, Total Break Time: {per.break_time // 3600}:{(per.break_time % 3600) // 60}:{(per.break_time % 3600) % 60}'
             )
         else:
-            prof = Profile.objects.get(id=profile_id)
-            prof.is_on_break = True
-            prof.save()
+            user_profile.is_on_break = True
+            user_profile.save()
             break_start_time = datetime.datetime.now().time()
             per = Performance.objects.get(user=user_profile.user, date=datetime.datetime.now().date())
             per.break_start_time = break_start_time
