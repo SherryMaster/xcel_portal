@@ -30,7 +30,6 @@ class Performance(models.Model):
     login_time = models.TimeField(null=True, blank=True)
     work_time = models.IntegerField(null=True, blank=True, default=0)
     break_time = models.IntegerField(null=True, blank=True, default=0)
-    start_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
     end_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
     break_start_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())
     break_end_time = models.TimeField(null=True, blank=True, default=datetime.datetime.now().time())

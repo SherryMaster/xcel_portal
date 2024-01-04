@@ -114,7 +114,12 @@ class LoginView(TemplateView):
         create_log(self.request.user, 'Logged In')
 
         # Profile
-        prof = Profile.objects.get(user=self.request.user)
+        try:
+            prof = Profile.objects.get(user=self.request.user)
+        except Profile.DoesNotExist:
+            prof = Profile.objects.create(
+                user=self.request.user
+            )
         prof.is_on_break = False
         prof.is_logged_in = True
         prof.save()
